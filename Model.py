@@ -57,7 +57,7 @@ def get_Model(training):
 
     # CNN to RNN
 
-    inner = Reshape(target_shape=((n//4, n*16)), name='reshape')(inner)  # (None, 32, 2048)
+    inner = Reshape(target_shape=((n//4, n*4)), name='reshape')(inner)  # (None, 32, 2048)
     inner = Dense(n//2, activation='relu', kernel_initializer='he_normal', name='dense1')(inner)  # (None, 32, 64)
 
     # RNN layer
