@@ -2,15 +2,64 @@ import cv2
 import os, random
 import numpy as np
 from parameter import letters
-
+letters='அ ஆ ஆ இ ஈ ஈ உ ஊ ஊ எ ஏ ஐ ஒ ஓ ஔ ஃ'.split()
 # # Input data generator
 def labels_to_text(labels):     # letters의 index -> text (string)
     return ''.join(list(map(lambda x: letters[int(x)], labels)))
 
-def text_to_labels(text):      # text를 letters 배열에서의 인덱스 값으로 변환
-    return list(map(lambda x: letters.index(x), text))
+def text_to_labels(text):      
+  text=text.strip('a')[:-1]
+  return [int(text)]
+import matplotlib.pyplot as plt
+from PIL import ImageFilter,Image
+import numpy as np
+import cv2
+
+def normalize_to_emnist(im):
+    width = float(im.size[0])
+    height = float(im.size[1])
+    newImage = Image.new('L',(28,28),(255))
 
 
+    if width > height: #check which dimension is bigger
+        #Width is bigger. Width becomes 20 pixels.
+        nheight = int(round((28.0/width*height),0)) #resize height according to ratio width
+        if (nheight == 0): #rare case but minimum is 1 pixel
+            nheight = 1  
+        # resize and sharpen
+        img = im.resize((28,nheight), Image.ANTIALIAS).filter(ImageFilter.SHARPEN)
+        wtop = int(round(((28 - nheight)/2),0)) #caculate horizontal pozition
+        newImage.paste(img, (0,wtop)) #paste resized image on white canvas
+    else:
+    #Height is bigger. Heigth becomes 20 pixels. 
+        nwidth = int(round((28.0/height*width),0)) #resize width according to ratio height
+        if (nwidth == 0): #rare case but minimum is 1 pixel
+            nwidth = 1
+     # resize and sharpen
+        img = im.resize((nwidth,28), Image.ANTIALIAS).filter(ImageFilter.SHARPEN)
+        wleft = int(round(((28 - nwidth)/2),0)) #caculate vertical pozition
+        newImage.paste(img, (wleft,0)) #paste resize
+
+
+# # Normalizing image into pixel values
+
+# In[9]:
+
+
+    # tv = list(newImage.getdata())
+    # tva = [ (255-x)*1.0/255.0 for x in tv]
+
+
+# In[10]:
+
+
+    # for i in range(len(tva)):
+    #     if tva[i]<=0.45:
+    #         tva[i]=0.0
+    # n_image = np.array(tva)
+
+    return newImage
+from PIL import Image
 class TextImageGenerator:
     def __init__(self, img_dirpath, img_w, img_h,
                  batch_size, downsample_factor, max_text_len=9):
@@ -31,10 +80,14 @@ class TextImageGenerator:
     def build_data(self):
         print(self.n, " Image Loading start...")
         for i, img_file in enumerate(self.img_dir):
-            img = cv2.imread(self.img_dirpath + img_file, cv2.IMREAD_GRAYSCALE)
-            img = cv2.resize(img, (self.img_w, self.img_h))
-            img = img.astype(np.float32)
-            img = (img / 255.0) * 2.0 - 1.0
+            # print(i)
+            f=(self.img_dirpath + img_file)
+            img=Image.open(f).convert('LA')
+            img=normalize_to_emnist(img)
+            # img = cv2.imread(self.img_dirpath + img_file, cv2.IMREAD_UNCHANGED )
+            # img = cv2.resize(img, (self.img_w, self.img_h))
+            # img = img.astype(np.float32)
+            # img = (img / 255.0) * 2.0 - 1.0
 
             self.imgs[i, :, :] = img
             self.texts.append(img_file[0:-4])
