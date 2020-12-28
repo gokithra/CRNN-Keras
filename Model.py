@@ -24,50 +24,52 @@ def get_Model(training):
     inputs = Input(name='the_input', shape=input_shape, dtype='float32')  # (None, 128, 64, 1)
 
     # Convolution layer (VGG)
-    inner = Conv2D(64, (3, 3), padding='same', name='conv1', kernel_initializer='he_normal')(inputs)  # (None, 128, 64, 64)
+    n= 28
+    inner = Conv2D(n//2, (3, 3), padding='same', name='conv1', kernel_initializer='he_normal')(inputs)  # (None, 128, 64, 64)
     inner = BatchNormalization()(inner)
     inner = Activation('relu')(inner)
     inner = MaxPooling2D(pool_size=(2, 2), name='max1')(inner)  # (None,64, 32, 64)
 
-    inner = Conv2D(128, (3, 3), padding='same', name='conv2', kernel_initializer='he_normal')(inner)  # (None, 64, 32, 128)
+    inner = Conv2D(n, (3, 3), padding='same', name='conv2', kernel_initializer='he_normal')(inner)  # (None, 64, 32, 128)
     inner = BatchNormalization()(inner)
     inner = Activation('relu')(inner)
     inner = MaxPooling2D(pool_size=(2, 2), name='max2')(inner)  # (None, 32, 16, 128)
 
-    inner = Conv2D(256, (3, 3), padding='same', name='conv3', kernel_initializer='he_normal')(inner)  # (None, 32, 16, 256)
+    inner = Conv2D(n*2, (3, 3), padding='same', name='conv3', kernel_initializer='he_normal')(inner)  # (None, 32, 16, 256)
     inner = BatchNormalization()(inner)
     inner = Activation('relu')(inner)
-    inner = Conv2D(256, (3, 3), padding='same', name='conv4', kernel_initializer='he_normal')(inner)  # (None, 32, 16, 256)
+    inner = Conv2D(n*2, (3, 3), padding='same', name='conv4', kernel_initializer='he_normal')(inner)  # (None, 32, 16, 256)
     inner = BatchNormalization()(inner)
     inner = Activation('relu')(inner)
     inner = MaxPooling2D(pool_size=(1, 2), name='max3')(inner)  # (None, 32, 8, 256)
 
-    inner = Conv2D(512, (3, 3), padding='same', name='conv5', kernel_initializer='he_normal')(inner)  # (None, 32, 8, 512)
+    inner = Conv2D(n*4, (3, 3), padding='same', name='conv5', kernel_initializer='he_normal')(inner)  # (None, 32, 8, 512)
     inner = BatchNormalization()(inner)
     inner = Activation('relu')(inner)
-    inner = Conv2D(512, (3, 3), padding='same', name='conv6')(inner)  # (None, 32, 8, 512)
+    inner = Conv2D(n*4, (3, 3), padding='same', name='conv6')(inner)  # (None, 32, 8, 512)
     inner = BatchNormalization()(inner)
     inner = Activation('relu')(inner)
     inner = MaxPooling2D(pool_size=(1, 2), name='max4')(inner)  # (None, 32, 4, 512)
 
-    inner = Conv2D(512, (2, 2), padding='same', kernel_initializer='he_normal', name='con7')(inner)  # (None, 32, 4, 512)
+    inner = Conv2D(n*4, (2, 2), padding='same', kernel_initializer='he_normal', name='con7')(inner)  # (None, 32, 4, 512)
     inner = BatchNormalization()(inner)
     inner = Activation('relu')(inner)
 
     # CNN to RNN
-    inner = Reshape(target_shape=((32, 2048)), name='reshape')(inner)  # (None, 32, 2048)
-    inner = Dense(64, activation='relu', kernel_initializer='he_normal', name='dense1')(inner)  # (None, 32, 64)
+
+    inner = Reshape(target_shape=((n//4, n*16)), name='reshape')(inner)  # (None, 32, 2048)
+    inner = Dense(n//2, activation='relu', kernel_initializer='he_normal', name='dense1')(inner)  # (None, 32, 64)
 
     # RNN layer
-    lstm_1 = LSTM(256, return_sequences=True, kernel_initializer='he_normal', name='lstm1')(inner)  # (None, 32, 512)
-    lstm_1b = LSTM(256, return_sequences=True, go_backwards=True, kernel_initializer='he_normal', name='lstm1_b')(inner)
+    lstm_1 = LSTM(n*2, return_sequences=True, kernel_initializer='he_normal', name='lstm1')(inner)  # (None, 32, 512)
+    lstm_1b = LSTM(n*2, return_sequences=True, go_backwards=True, kernel_initializer='he_normal', name='lstm1_b')(inner)
     reversed_lstm_1b = Lambda(lambda inputTensor: K.reverse(inputTensor, axes=1)) (lstm_1b)
 
     lstm1_merged = add([lstm_1, reversed_lstm_1b])  # (None, 32, 512)
     lstm1_merged = BatchNormalization()(lstm1_merged)
     
-    lstm_2 = LSTM(256, return_sequences=True, kernel_initializer='he_normal', name='lstm2')(lstm1_merged)
-    lstm_2b = LSTM(256, return_sequences=True, go_backwards=True, kernel_initializer='he_normal', name='lstm2_b')(lstm1_merged)
+    lstm_2 = LSTM(n*2, return_sequences=True, kernel_initializer='he_normal', name='lstm2')(lstm1_merged)
+    lstm_2b = LSTM(n*2, return_sequences=True, go_backwards=True, kernel_initializer='he_normal', name='lstm2_b')(lstm1_merged)
     reversed_lstm_2b= Lambda(lambda inputTensor: K.reverse(inputTensor, axes=1)) (lstm_2b)
 
     lstm2_merged = concatenate([lstm_2, reversed_lstm_2b])  # (None, 32, 1024)
