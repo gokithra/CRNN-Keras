@@ -1,10 +1,10 @@
-CHAR_VECTOR = "adefghjknqrstwABCDEFGHIJKLMNOPZ0123456789"
+CHAR_VECTOR = 'அ ஆ ஆ இ ஈ ஈ உ ஊ ஊ எ ஏ ஐ ஒ ஓ ஔ ஃ'.split()
 
 letters = [letter for letter in CHAR_VECTOR]
 
 num_classes = len(letters) + 1
 
-img_w, img_h = 128, 64
+img_w, img_h = 28, 28
 
 # Network parameters
 batch_size = 128
